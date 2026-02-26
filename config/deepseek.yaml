@@ -1,0 +1,65 @@
+agent:
+  cls: DeepSeekV32ThinkingWithToolAgent
+  model: deepseek
+  max_iter: 250
+  sampling:
+    enabled: true
+    n_samples: 4
+exps:
+  input_file: 
+  input_file_list:
+    - data/synthesis_qa_web.jsonl
+    - data/synthesis_qa_kg.jsonl
+  max_workers: 4096
+  num_processes: 8
+  output_dir:  output/deepseek
+  threads_per_process: 16
+  queue_multiplier: 2
+llm:
+  local:
+    api_key: abc
+    endpoint: 
+    endpoint_list:
+    - http://a.b.c.d:18901/v1
+    - http://e.f.g.h:18901/v1
+    model_name: deepseek-v3.2
+judge:
+  remote: false
+  local:
+    endpoint: http://i.j.k.l:80/v1
+    model_name: gpt-oss
+tools:
+  crawl:
+    cache_dir: ./cache/crawl/
+    jina:
+      token_budget: -1
+    retry:
+      delay: 2.0
+      max_attempts: 3
+    serper: null
+    timeout: 120
+  crawl_tool: jina
+  crawl_tool_backup: serper.dev
+  python:
+    compile_timeout: 60
+    retry:
+      delay: 2.0
+      max_attempts: 2
+    run_timeout: 120
+  search:
+    cache_dir: ./cache/search/
+    num: 10
+    retry:
+      delay: 2.0
+      max_attempts: 5
+    timeout: 120
+  search_tool: serper.dev
+  serper_key_usage_file: null
+  summarize_tool: brief_llm_summarizer
+  summarize:
+    cache_dir: ./cache/summarize/
+    endpoint: http://m.n.o.p:80/v1
+    model_name: qwen3-30b-a3b-instruct
+
+wandb:
+  enabled: false 
