@@ -38,7 +38,7 @@ tools:
       max_attempts: 3
     serper: null
     timeout: 120
-  crawl_tool: jina
+  crawl_tool: jina  # options: jina, serper.dev, local, tavily
   crawl_tool_backup: serper.dev
   python:
     compile_timeout: 60
@@ -53,7 +53,7 @@ tools:
       delay: 2.0
       max_attempts: 5
     timeout: 120
-  search_tool: serper.dev
+  search_tool: serper.dev  # options: serper.dev, empty, local, tavily
   serper_key_usage_file: null
   summarize_tool: brief_llm_summarizer
   summarize:
