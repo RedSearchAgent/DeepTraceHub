@@ -640,6 +640,130 @@ class SerperDevWebCrawlTool(WebCrawlToolBase):
         await asyncio.to_thread(self.cache.save, key=url, value=final_web_content)
         return final_web_content
 
+class TavilySearchTool(SearchToolBase):
+    name = "tavily"
+    category = 'search'
+    def __init__(self, config_path="config/config.yaml", **kwargs):
+        super().__init__(config_path, **kwargs)
+        from tavily import AsyncTavilyClient
+        self.__tavily_client = AsyncTavilyClient()
+        self.cache = SearchCache(cache_dir=f"{self.config['cache_dir']}/{self.name}")
+
+    async def search(self, query: str) -> OrganicResults:
+        cached_data = await asyncio.to_thread(self.cache.load, key=query)
+        if cached_data is not None:  # cache hit
+            return cached_data
+
+        async def _perform_tavily_search() -> Dict[str, Any]:
+            return await self.__tavily_client.search(
+                query=query,
+                max_results=self.config["num"],
+                search_depth="basic",
+            )
+
+        try:
+            results = await execute_with_retries(
+                _perform_tavily_search,
+                context=f"tavily search for '{query}'",
+                max_attempts=self.config["retry"]["max_attempts"],
+                delay=self.config["retry"]["delay"],
+            )
+        except Exception as exc:
+            logger.error(f"[TavilySearchTool.search] Tavily search failed for '{query}': {exc}")
+            logger.error(traceback.format_exc())
+            return OrganicResults(query=f"Failed to search for '{query}'", results=[])
+
+        serps: List[SerpEntry] = []
+        for idx, result in enumerate(results.get("results", [])):
+            serps.append(
+                SerpEntry(
+                    url=result.get("url", ""),
+                    title=result.get("title", ""),
+                    snippet=result.get("content", ""),
+                    content=None,
+                    rank=idx,
+                    source=SerpProvider.TAVILY,
+                    raw_organic=result
+                )
+            )
+        final_organic_results = OrganicResults(query=query, results=serps)
+        await asyncio.to_thread(self.cache.save, key=query, value=final_organic_results)
+        return final_organic_results
+
+class TavilyWebCrawlTool(WebCrawlToolBase):
+    name = "tavily"
+    category = 'crawl'
+    def __init__(self, config_path="config/config.yaml", **kwargs):
+        super().__init__(config_path, **kwargs)
+        from tavily import AsyncTavilyClient
+        self.__tavily_client = AsyncTavilyClient()
+
+    async def crawl(self, url: str) -> Union[WebContent, WebContentV2]:
+        cached_data = await asyncio.to_thread(self.cache.load, key=url)
+        if cached_data is not None:  # cache hit
+            return cached_data
+
+        url = self.filter_url(url)
+
+        async def _perform_tavily_extract() -> Dict[str, Any]:
+            return await self.__tavily_client.extract(urls=[url])
+
+        try:
+            results = await execute_with_retries(
+                _perform_tavily_extract,
+                context=f"tavily extract for '{url}'",
+                max_attempts=self.config["retry"]["max_attempts"],
+                delay=self.config["retry"]["delay"],
+            )
+        except Exception as exc:
+            logger.error("[TavilyWebCrawlTool.crawl] Tavily extract failed for %s: %s", url, exc)
+            logger.error(traceback.format_exc())
+            return WebContentV2(
+                url=url,
+                title=None,
+                snippet=None,
+                content=WebContent(
+                    text_content=None,
+                    source=WebProvider.TAVILY
+                ),
+                rank=0,
+                source=WebProvider.TAVILY,
+                raw_organic=None
+            )
+
+        extracted = results.get("results", [])
+        if not extracted:
+            return WebContentV2(
+                url=url,
+                title=None,
+                snippet=None,
+                content=WebContent(
+                    text_content=None,
+                    source=WebProvider.TAVILY
+                ),
+                rank=0,
+                source=WebProvider.TAVILY,
+                raw_organic=None
+            )
+
+        data = extracted[0]
+        raw_content = data.get("raw_content", "")
+        web_content = WebContent(
+            text_content=raw_content,
+            source=WebProvider.TAVILY,
+        )
+        final_web_content = WebContentV2(
+            url=url,
+            title=None,
+            snippet=None,
+            content=web_content,
+            rank=0,
+            source=WebProvider.TAVILY,
+            raw_organic=None
+        )
+        await asyncio.to_thread(self.cache.save, key=url, value=final_web_content)
+        return final_web_content
+
 class JinaWebCrawlTool(WebCrawlToolBase):
     # jina crawl docs: https://r.jina.ai/docs#tag/crawl/paths/~1%7Burl%7D/get
     name = "jina"
