@@ -23,6 +23,7 @@ class SerpProvider(str, Enum):
     WANGSU = "wangsu"
     WANGSU_SMART = "wangsu_smart"
     LOCAL = "local"
+    TAVILY = "tavily"
 
 class WebProvider(str, Enum):
     SERPER = "serper.dev"
@@ -30,6 +31,7 @@ class WebProvider(str, Enum):
     GEMINI = "gemini"
     XHS = "xhs"
     LOCAL = "local"
+    TAVILY = "tavily"
 
 
 @dataclass
