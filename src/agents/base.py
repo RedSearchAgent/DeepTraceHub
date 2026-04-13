@@ -20,6 +20,7 @@ from tools.search import (
     EmptyWebSearchTool,
     SerperDevSearchTool,
     LocalWebSearchTool,
+    TavilySearchTool,
 )
 
 from tools.summarizer import (
@@ -30,6 +31,7 @@ from tools.search import (
     JinaWebCrawlTool,
     SerperDevWebCrawlTool,
     LocalWebCrawlTool,
+    TavilyWebCrawlTool,
 )
 from utils.file_utils import FileUtils
 from utils.logger import get_logger
@@ -44,11 +46,13 @@ TOOL_CLASS_SEARCH = [
     EmptyWebSearchTool,
     SerperDevSearchTool,
     LocalWebSearchTool,
+    TavilySearchTool,
 ]
 TOOL_CLASS_CRAWL = [
     JinaWebCrawlTool,
     SerperDevWebCrawlTool,
     LocalWebCrawlTool,
+    TavilyWebCrawlTool,
 ]
 TOOL_CLASS_SUMMARIZER = [
     LLMSummarizer,
